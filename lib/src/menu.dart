@@ -1,22 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'menu_item.dart';
+import 'system_tray_platform.dart';
 import 'utils.dart';
 
-const String _kChannelName = "flutter/system_tray/menu_manager";
-
-const String _kCreateContextMenu = "CreateContextMenu";
-
-const String _kMenuIdKey = 'menu_id';
-const String _kMenuItemIdKey = 'menu_item_id';
-const String _kMenuListKey = 'menu_list';
-
-const String _kMenuItemSelectedCallbackMethod = 'MenuItemSelectedCallback';
-
 class Menu {
-  static const MethodChannel _platformChannel = MethodChannel(_kChannelName);
-
   static final Map<int, Menu> _menuMap = {};
 
   /// The ID to use the next time a menu needs an ID assigned.
@@ -31,7 +19,8 @@ class Menu {
   bool _updateInProgress = false;
 
   Menu() {
-    _platformChannel.setMethodCallHandler(_callbackHandler);
+    SystemTrayPlatform.instance
+        .registerMenuItemSelectedCallback(_callbackHandler);
   }
 
   int get menuId => _menuId;
@@ -94,14 +83,10 @@ class Menu {
 
       await _channelRepresentationForMenus(menus);
 
-      result = await _platformChannel
-          .invokeMethod(_kCreateContextMenu, <String, dynamic>{
-        _kMenuIdKey: _menuId,
-        _kMenuListKey: menus.map((e) => e.toJson()).toList(),
-      });
+      result = await SystemTrayPlatform.instance.buildMenu(_menuId, menus);
       _updateInProgress = false;
-    } on PlatformException catch (e) {
-      debugPrint('Platform exception create context menu: ${e.message}');
+    } catch (e) {
+      debugPrint('Exception create context menu: $e');
     }
     return result;
   }
@@ -113,7 +98,6 @@ class Menu {
 
   Future<void> _channelRepresentationForMenu(List<MenuItemBase> menus) async {
     for (final menuItem in menus) {
-      menuItem.channel = _platformChannel;
       menuItem.menuId = menuId;
       menuItem.menuItemId = nextMenuItemId;
       menuItem.imageAbsolutePath = await Utils.getIcon(menuItem.image);
@@ -124,25 +108,21 @@ class Menu {
     }
   }
 
-  Future<void> _callbackHandler(MethodCall methodCall) async {
-    if (methodCall.method == _kMenuItemSelectedCallbackMethod) {
-      if (_updateInProgress) {
-        debugPrint(
-            'Warning: Menu selection callback received during menu update.');
-        return;
-      }
+  void _callbackHandler(int menuId, int menuItemId) {
+    if (_updateInProgress) {
+      debugPrint(
+          'Warning: Menu selection callback received during menu update.');
+      return;
+    }
 
-      final int? menuId = methodCall.arguments[_kMenuIdKey];
-      final int? menuItemId = methodCall.arguments[_kMenuItemIdKey];
-      final MenuItemBase? menuItem =
-          _findItemById(menuItemId, _menuMap[menuId]?._menus);
+    final MenuItemBase? menuItem =
+        _findItemById(menuItemId, _menuMap[menuId]?._menus);
 
-      debugPrint('MenuItemBase select menuId:$menuId menuItemId:$menuItemId');
+    debugPrint('MenuItemBase select menuId:$menuId menuItemId:$menuItemId');
 
-      final callback = menuItem?.onClicked;
-      if (callback != null) {
-        callback(menuItem!);
-      }
+    final callback = menuItem?.onClicked;
+    if (callback != null) {
+      callback(menuItem!);
     }
   }
 }

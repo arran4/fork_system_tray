@@ -1,10 +1,5 @@
-import 'package:flutter/services.dart';
 import 'package:system_tray/src/utils.dart';
-
-const String _kSetLabel = "SetLabel";
-const String _kSetImage = "SetImage";
-const String _kSetEnable = "SetEnable";
-const String _kSetCheck = "SetCheck";
+import 'system_tray_platform.dart';
 
 const String _kMenuIdKey = 'menu_id';
 const String _kMenuItemIdKey = 'menu_item_id';
@@ -40,39 +35,23 @@ abstract class MenuItemBase {
   }
 
   Future<void> setLabel(String label) async {
-    bool result = await channel?.invokeMethod(_kSetLabel, {
-      _kMenuIdKey: menuId ?? -1,
-      _kMenuItemIdKey: menuItemId ?? -1,
-      _kLabelKey: label,
-    });
-    if (result) {
-      this.label = label;
-    }
+    await SystemTrayPlatform.instance
+        .setMenuItemLabel(menuId ?? -1, menuItemId ?? -1, label);
+    this.label = label;
   }
 
   Future<void> setImage(String image) async {
     String? imageAbsolutePath = await Utils.getIcon(image);
-
-    bool result = await channel?.invokeMethod(_kSetImage, {
-      _kMenuIdKey: menuId ?? -1,
-      _kMenuItemIdKey: menuItemId ?? -1,
-      _kImageKey: imageAbsolutePath,
-    });
-    if (result) {
-      this.image = image;
-      this.imageAbsolutePath = imageAbsolutePath;
-    }
+    await SystemTrayPlatform.instance.setMenuItemImage(
+        menuId ?? -1, menuItemId ?? -1, imageAbsolutePath ?? '');
+    this.image = image;
+    this.imageAbsolutePath = imageAbsolutePath;
   }
 
   Future<void> setEnable(bool enabled) async {
-    bool result = await channel?.invokeMethod(_kSetEnable, {
-      _kMenuIdKey: menuId ?? -1,
-      _kMenuItemIdKey: menuItemId ?? -1,
-      _kEnabledKey: enabled,
-    });
-    if (result) {
-      this.enabled = enabled;
-    }
+    await SystemTrayPlatform.instance
+        .setMenuItemEnable(menuId ?? -1, menuItemId ?? -1, enabled);
+    this.enabled = enabled;
   }
 
   Future<void> setCheck(bool checked) async {
@@ -80,17 +59,11 @@ abstract class MenuItemBase {
       return;
     }
 
-    bool result = await channel?.invokeMethod(_kSetCheck, {
-      _kMenuIdKey: menuId ?? -1,
-      _kMenuItemIdKey: menuItemId ?? -1,
-      _kCheckedKey: checked,
-    });
-    if (result) {
-      this.checked = checked;
-    }
+    await SystemTrayPlatform.instance
+        .setMenuItemCheck(menuId ?? -1, menuItemId ?? -1, checked);
+    this.checked = checked;
   }
 
-  MethodChannel? channel;
   int? menuId;
   int? menuItemId;
   String? imageAbsolutePath;
