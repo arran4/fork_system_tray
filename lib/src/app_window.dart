@@ -1,29 +1,46 @@
 import 'dart:async';
+import 'dart:io';
 
-import 'system_tray_platform.dart';
+import 'package:flutter/services.dart';
+
+const String _kChannelName = "flutter/system_tray/app_window";
+
+const String _kInitAppWindow = "InitAppWindow";
+const String _kShowAppWindow = "ShowAppWindow";
+const String _kHideAppWindow = "HideAppWindow";
+const String _kCloseAppWindow = "CloseAppWindow";
 
 /// Representation of native window
 class AppWindow {
   AppWindow() {
+    _platformChannel.setMethodCallHandler(_callbackHandler);
     _init();
   }
 
+  static const MethodChannel _platformChannel = MethodChannel(_kChannelName);
+
   /// Show native window
   Future<void> show() async {
-    await SystemTrayPlatform.instance.showAppWindow();
+    if (Platform.isLinux) return;
+    await _platformChannel.invokeMethod(_kShowAppWindow);
   }
 
   /// Hide native window
   Future<void> hide() async {
-    await SystemTrayPlatform.instance.hideAppWindow();
+    if (Platform.isLinux) return;
+    await _platformChannel.invokeMethod(_kHideAppWindow);
   }
 
   /// Close native window
   Future<void> close() async {
-    await SystemTrayPlatform.instance.closeAppWindow();
+    if (Platform.isLinux) return;
+    await _platformChannel.invokeMethod(_kCloseAppWindow);
   }
 
   void _init() async {
-    await SystemTrayPlatform.instance.initAppWindow();
+    if (Platform.isLinux) return;
+    await _platformChannel.invokeMethod(_kInitAppWindow);
   }
+
+  Future<void> _callbackHandler(MethodCall methodCall) async {}
 }

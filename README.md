@@ -154,6 +154,7 @@ sudo apt-get install libayatana-appindicator3-dev
             <li>click</li>
             <li>right-click</li>
             <li>double-click</li>
+            <li>scroll</li>
           </ul>
         </td>
     </tr>

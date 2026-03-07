@@ -1,5 +1,7 @@
 #include "my_application.h"
+
 #include <flutter_linux/flutter_linux.h>
+
 #include "flutter/generated_plugin_registrant.h"
 
 struct _MyApplication {
